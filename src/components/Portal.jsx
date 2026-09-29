@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { SCHOOL_NAME } from '../lib/constants'
+import Logo from './Logo'
 
 const EASE = [0.76, 0, 0.24, 1]
 const HOLD = 0.45      // хаалттай төлөвт зогсох хугацаа (сек)
@@ -106,9 +107,10 @@ function Face() {
   return (
     <div className="absolute inset-0 grid place-items-center px-6 text-center text-white">
       <div className="relative">
-        <p className="absolute inset-x-0 bottom-full mb-5 text-[15px] tracking-[0.04em] text-white/85 sm:mb-6 sm:text-[17px]">
-          {SCHOOL_NAME}
-        </p>
+        <div className="absolute inset-x-0 bottom-full mb-5 flex flex-col items-center gap-4 sm:mb-6">
+          <Logo size={72} decorative className="h-14 w-14 sm:h-[72px] sm:w-[72px]" />
+          <p className="text-[15px] tracking-[0.04em] text-white/85 sm:text-[17px]">{SCHOOL_NAME}</p>
+        </div>
         <p className="whitespace-nowrap text-[11vw] font-bold leading-[1.02] tracking-[0.02em] sm:text-[clamp(40px,6vw,80px)]">
           ӨДӨРЛӨГИЙН<br className="sm:hidden" /><span className="hidden sm:inline"> </span>СУДАЛГАА
         </p>

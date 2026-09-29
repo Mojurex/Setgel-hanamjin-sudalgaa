@@ -5,9 +5,10 @@ import Intro from '../components/Intro'
 import ProgressLine from '../components/ProgressLine'
 import PrivacyNote from '../components/PrivacyNote'
 import ThankYou from '../components/ThankYou'
+import { Brand } from '../components/Logo'
 import { Question, RadioList, CheckboxList, RatingCircles, Matrix, CounterTextarea } from '../components/fields'
 import {
-  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, DEFAULT_TOPICS, COUNCIL_OPTIONS,
+  GUARDIANS, INFO_SOURCES, DEFAULT_TOPICS, COUNCIL_OPTIONS,
   FEEDBACK_MAX, EMAIL_RE, CLASS_GROUPS, GRADES, groupsOfGrade,
 } from '../lib/constants'
 import { fetchSubjects, fetchTopics, submitResponse } from '../lib/api'
@@ -198,7 +199,7 @@ export default function Survey() {
 
   return (
     <main className="mx-auto w-full max-w-[640px] px-4 pb-20 pt-6">
-      <p className="text-[15px] text-plum">{SCHOOL_NAME}</p>
+      <Brand size={36} />
 
       {step === DONE && <ThankYou onRestart={restart} />}
 

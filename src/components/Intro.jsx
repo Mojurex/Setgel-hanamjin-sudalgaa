@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
-import { SCHOOL_NAME } from '../lib/constants'
 import PrivacyNote from './PrivacyNote'
+import { Brand } from './Logo'
 
 const rise = (delay) => ({
   hidden: { opacity: 0, y: 12 },
@@ -16,7 +16,7 @@ export default function Intro({ revealed, onStart }) {
       style={{ background: 'linear-gradient(180deg, #F5F0FF 0%, #F5F0FF 35%, #D8B4FE 100%)' }}
       inert={!revealed}
     >
-      <p className="mx-auto w-full max-w-[640px] pt-6 text-[15px] text-plum">{SCHOOL_NAME}</p>
+      <Brand size={40} className="mx-auto w-full max-w-[640px] pt-6" />
       <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center py-16 text-center">
         <motion.h1 variants={rise(0)} initial="hidden" animate={state} className="text-[34px] font-bold text-ink sm:text-[44px]">
           Өдөрлөгийн судалгаа нээгдлээ

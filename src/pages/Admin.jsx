@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChartPanel, HBar, StackedAdequacy, Donut } from '../components/Charts'
 import ListEditor from '../components/ListEditor'
+import Logo, { Brand } from '../components/Logo'
 import {
   SCHOOL_NAME, GUARDIANS, INFO_SOURCES, ADEQUACY_LEVELS, COUNCIL_OPTIONS,
   CLASS_GROUPS, GRADES, gradeOf,
@@ -55,8 +56,9 @@ function Login({ onDone }) {
 
   return (
     <main className="mx-auto flex min-h-[100dvh] max-w-[420px] flex-col justify-center px-4 py-12">
-      <p className="text-[15px] text-plum">{SCHOOL_NAME}</p>
-      <h1 className="mt-2 text-[32px] font-bold text-ink">Админ нэвтрэх</h1>
+      <Logo size={64} decorative />
+      <p className="mt-5 text-[15px] text-plum">{SCHOOL_NAME}</p>
+      <h1 className="mt-1 text-[32px] font-bold text-ink">Админ нэвтрэх</h1>
       <form onSubmit={submit} noValidate className="mt-8 flex flex-col gap-5">
         {!isDemo && (
           <label className="flex flex-col gap-2 text-[15px] text-ink">
@@ -125,8 +127,8 @@ function Dashboard({ onLogout }) {
     <main className="mx-auto w-full max-w-[1120px] px-4 pb-20 pt-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[15px] text-plum">{SCHOOL_NAME}</p>
-          <h1 className="mt-1 text-[30px] font-bold text-ink sm:text-[36px]">Өдөрлөгийн судалгааны үр дүн</h1>
+          <Brand size={36} />
+          <h1 className="mt-3 text-[30px] font-bold text-ink sm:text-[36px]">Өдөрлөгийн судалгааны үр дүн</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="btn btn-secondary" onClick={load} disabled={loading}>{loading ? 'Ачаалж байна…' : 'Шинэчлэх'}</button>
