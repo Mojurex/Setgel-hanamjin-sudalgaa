@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import Portal from '../components/Portal'
-import Intro from '../components/Intro'
+import Landing from '../components/Landing'
 import ProgressLine from '../components/ProgressLine'
 import PrivacyNote from '../components/PrivacyNote'
 import ThankYou from '../components/ThankYou'
@@ -59,19 +58,11 @@ export default function Survey() {
   const [submitError, setSubmitError] = useState('')
   const [dupConfirm, setDupConfirm] = useState(false)
   const [guard, setGuard] = useState(() => checkGuard())
-  const [showPortal, setShowPortal] = useState(() => !portalSeen())
-  const [revealed, setRevealed] = useState(() => portalSeen())
   const headRef = useRef(null)
 
   useEffect(() => {
     fetchSubjects().then((s) => setSubjects(s.map((x) => x.name)))
     fetchTopics().then((t) => setTopics(t.filter((x) => x.active)))
-  }, [])
-
-  const onReveal = useCallback(() => setRevealed(true), [])
-  const onPortalDone = useCallback(() => {
-    setShowPortal(false)
-    try { localStorage.setItem(PORTAL_KEY, '1') } catch { /* private mode */ }
   }, [])
 
   // errKey — энэ утга өөрчлөгдөхөд арилгах алдааны түлхүүр
@@ -185,14 +176,7 @@ export default function Survey() {
     goTo(0)
   }
 
-  if (step === INTRO) {
-    return (
-      <>
-        <Intro revealed={revealed} onStart={() => goTo(0)} />
-        {showPortal && <Portal onReveal={onReveal} onDone={onPortalDone} />}
-      </>
-    )
-  }
+  if (step === INTRO) return <Landing startOpen={portalSeen()} onStart={() => goTo(0)} />
 
   const blocked = !guard.ok && step !== DONE
   const cur = STEPS[step]
@@ -221,15 +205,15 @@ export default function Survey() {
             <ProgressLine step={step + 1} total={3} />
           </div>
 
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence mode="wait">
             <motion.form
               key={step}
               noValidate
               aria-labelledby="step-title"
               onSubmit={(e) => { e.preventDefault(); if (step < 2) next(); else submit() }}
-              initial={{ opacity: 0, x: 12 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -12 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="relative"
             >

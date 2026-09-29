@@ -17,9 +17,9 @@ export default function Logo({ size = 32, decorative = false, className = '' }) 
 }
 
 /** Лого + сургуулийн нэр (хуудасны толгой) */
-export function Brand({ size = 32, className = '' }) {
+export function Brand({ size = 32, className = '', ...rest }) {
   return (
-    <p className={`flex items-center gap-3 text-[15px] text-plum ${className}`}>
+    <p className={`flex items-center gap-3 text-[15px] text-plum ${className}`} {...rest}>
       <Logo size={size} decorative />
       {SCHOOL_NAME}
     </p>
