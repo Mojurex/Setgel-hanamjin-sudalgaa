@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ChartPanel, HBar, StackedAdequacy, Donut } from '../components/Charts'
+import ListEditor from '../components/ListEditor'
 import {
-  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, ADEQUACY_TOPICS, ADEQUACY_LEVELS, COUNCIL_OPTIONS,
+  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, ADEQUACY_LEVELS, COUNCIL_OPTIONS,
   CLASS_GROUPS, GRADES, gradeOf,
 } from '../lib/constants'
 import {
   currentAdmin, signIn, signOut, fetchResponses, fetchSubjects, addSubject, removeSubject, renameSubject,
+  fetchTopics, addTopic, renameTopic, setTopicActive,
 } from '../lib/api'
+import { topicsForReport } from '../lib/topics'
 import { isDemo } from '../lib/supabase'
 import { downloadCsv } from '../lib/csv'
 
@@ -76,6 +79,7 @@ function Login({ onDone }) {
 function Dashboard({ onLogout }) {
   const [rows, setRows] = useState([])
   const [subjects, setSubjects] = useState([])
+  const [topics, setTopics] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [grade, setGrade] = useState('')
@@ -85,9 +89,10 @@ function Dashboard({ onLogout }) {
     setLoading(true)
     setError('')
     try {
-      const [r, s] = await Promise.all([fetchResponses(), fetchSubjects()])
+      const [r, s, t] = await Promise.all([fetchResponses(), fetchSubjects(), fetchTopics()])
       setRows(r)
       setSubjects(s)
+      setTopics(t)
     } catch {
       setError('Өгөгдөл татаж чадсангүй. Дахин “Шинэчлэх” дарна уу.')
     } finally {
@@ -110,7 +115,10 @@ function Dashboard({ onLogout }) {
     return true
   }), [rows, grade, group])
 
-  const stats = useMemo(() => computeStats(filtered, subjects), [filtered, subjects])
+  const reportTopics = useMemo(() => topicsForReport(filtered, topics), [filtered, topics])
+  const stats = useMemo(() => computeStats(filtered, subjects, reportTopics), [filtered, subjects, reportTopics])
+  // Хүснэгт уншигдахгүй бол кодын нөөц жагсаалт (id < 0) ирнэ: засах боломжгүй
+  const topicsMissing = !isDemo && topics.length > 0 && topics.every((t) => t.id < 0)
   const scopeLabel = group ? `${group} бүлэг` : grade ? `${grade}-р анги` : 'Бүх анги'
 
   return (
@@ -122,7 +130,7 @@ function Dashboard({ onLogout }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="btn btn-secondary" onClick={load} disabled={loading}>{loading ? 'Ачаалж байна…' : 'Шинэчлэх'}</button>
-          <button type="button" className="btn btn-primary" onClick={() => downloadCsv(filtered, scopeLabel)} disabled={!filtered.length}>Excel татах (CSV)</button>
+          <button type="button" className="btn btn-primary" onClick={() => downloadCsv(filtered, scopeLabel, reportTopics)} disabled={!filtered.length}>Excel татах (CSV)</button>
           <button type="button" className="btn btn-text" onClick={onLogout}>Гарах</button>
         </div>
       </header>
@@ -209,7 +217,36 @@ function Dashboard({ onLogout }) {
         <div className="lg:col-span-2"><CouncilList rows={filtered} /></div>
       </div>
 
-      <SubjectsEditor subjects={subjects} onChange={setSubjects} />
+      <h2 className="mt-12 text-[22px] font-bold text-ink">Судалгааны тохиргоо</h2>
+      <p className="mt-1 text-[15px] text-plum">Дараагийн судалгаанд асуултын сонголтуудыг эндээс өөрчилнө. Код засах шаардлагагүй.</p>
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
+        <ListEditor
+          title="6-р асуултын чиглэлүүд"
+          description="“Дараах чиглэлээр хангалттай мэдээлэл авч чадсан уу?” асуултын мөрүүд. Хассан чиглэлийн өмнөх хариултууд тайланд хэвээр үлдэнэ."
+          items={topics}
+          onChange={setTopics}
+          onAdd={addTopic}
+          onRename={renameTopic}
+          onRemove={(t) => setTopicActive(t.id, false)}
+          onRestore={(t) => setTopicActive(t.id, true)}
+          addPlaceholder="Шинэ чиглэлийн нэр"
+          addButton="Чиглэл нэмэх"
+          removeConfirm={(label) => `“${label}” чиглэлийг судалгаанаас хасах уу? Өмнөх хариултууд устахгүй.`}
+          disabledNote={topicsMissing ? 'Supabase дээр adequacy_topics хүснэгт алга байна. supabase/schema.sql-ийг SQL Editor дээр дахин ажиллуулна уу.' : ''}
+        />
+        <ListEditor
+          title="7-р асуултын хичээлүүд"
+          description="“Аль хичээлийн мэдээлэл ойлгомжтой байсан бэ?” асуултын сонголтууд. “Бусад” автоматаар нэмэгдэнэ."
+          items={subjects.map((s) => ({ id: s.id, label: s.name }))}
+          onChange={setSubjects}
+          onAdd={addSubject}
+          onRename={renameSubject}
+          onRemove={(s) => removeSubject(s.id)}
+          addPlaceholder="Шинэ хичээлийн нэр"
+          addButton="Хичээл нэмэх"
+          removeConfirm={(label) => `“${label}” хичээлийг жагсаалтаас хасах уу?`}
+        />
+      </div>
     </main>
   )
 }
@@ -227,7 +264,7 @@ function Stat({ label, value, suffix, sub, className = '' }) {
   )
 }
 
-function computeStats(rows, subjects) {
+function computeStats(rows, subjects, topics) {
   const total = rows.length
   const rated = rows.filter((r) => r.org_rating)
   const avg = rated.length ? rated.reduce((s, r) => s + r.org_rating, 0) / rated.length : 0
@@ -239,7 +276,7 @@ function computeStats(rows, subjects) {
 
   const guardians = GUARDIANS.map((name, idx) => ({ name, idx, value: rows.filter((r) => r.guardian === name).length }))
 
-  const adequacy = ADEQUACY_TOPICS.map((t) => {
+  const adequacy = topics.map((t) => {
     const row = { name: t.label, n: 0 }
     for (const l of ADEQUACY_LEVELS) {
       row[l.value] = rows.filter((r) => r.info_adequacy?.[t.key] === l.value).length
@@ -350,64 +387,6 @@ function CouncilList({ rows }) {
             </table>
           </div>
         )}
-    </section>
-  )
-}
-
-function SubjectsEditor({ subjects, onChange }) {
-  const [name, setName] = useState('')
-  const [editing, setEditing] = useState(null)
-  const [err, setErr] = useState('')
-
-  async function run(fn) {
-    setErr('')
-    try { onChange(await fn()) } catch { setErr('Хадгалж чадсангүй. Ижил нэртэй хичээл байгаа эсэхийг шалгана уу.') }
-  }
-
-  return (
-    <section className="panel mt-6 p-5 sm:p-6">
-      <h2 className="text-[18px] font-bold text-ink">Хичээлийн жагсаалт</h2>
-      <p className="mt-1 text-[14px] text-plum">Судалгааны 7-р асуултад харагдана. “Бусад” сонголт автоматаар нэмэгдэнэ.</p>
-      <ul className="mt-4 flex flex-wrap gap-2">
-        {subjects.map((s) => (
-          <li key={s.id} className="flex items-center rounded-xl border border-lilac bg-white pl-3">
-            {editing?.id === s.id ? (
-              <form
-                className="flex items-center"
-                onSubmit={(e) => { e.preventDefault(); const v = editing.name.trim(); if (v) run(() => renameSubject(s.id, v)); setEditing(null) }}
-              >
-                <input className="w-36 bg-transparent py-2 text-[15px] text-ink focus:outline-none" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} aria-label="Хичээлийн шинэ нэр" autoFocus />
-                <button type="submit" className="min-h-[44px] min-w-[44px] text-plum hover:text-ink" aria-label="Хадгалах">
-                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" className="mx-auto" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-                </button>
-              </form>
-            ) : (
-              <>
-                <span className="py-2 text-[15px] text-ink">{s.name}</span>
-                <button type="button" className="min-h-[44px] min-w-[44px] text-plum hover:text-ink" onClick={() => setEditing({ id: s.id, name: s.name })} aria-label={`${s.name} засах`}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" className="mx-auto" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z" /></svg>
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              className="min-h-[44px] min-w-[44px] text-plum hover:text-ink"
-              onClick={() => { if (confirm(`“${s.name}” хичээлийг жагсаалтаас хасах уу?`)) run(() => removeSubject(s.id)) }}
-              aria-label={`${s.name} хасах`}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" className="mx-auto" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-            </button>
-          </li>
-        ))}
-      </ul>
-      <form
-        className="mt-4 flex flex-wrap gap-2"
-        onSubmit={(e) => { e.preventDefault(); const v = name.trim(); if (!v) return; run(() => addSubject(v)); setName('') }}
-      >
-        <input className="input max-w-[280px]" placeholder="Шинэ хичээлийн нэр" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} aria-label="Шинэ хичээлийн нэр" />
-        <button type="submit" className="btn btn-secondary">Хичээл нэмэх</button>
-      </form>
-      {err && <p role="alert" className="mt-3 font-bold text-ink">{err}</p>}
     </section>
   )
 }

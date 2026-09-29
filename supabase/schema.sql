@@ -68,7 +68,7 @@ create table if not exists public.form_responses (
   info_sources text[] not null default '{}',
   info_source_other text check (char_length(info_source_other) <= 120),
   org_rating smallint check (org_rating between 1 and 5),
-  -- {"lessons":"yes|partial|no","clubs":…,"cambridge":…,"goals":…}
+  -- {"<adequacy_topics.key>": "yes|partial|no", …}
   info_adequacy jsonb not null default '{}'::jsonb,
   clear_subjects text[] not null default '{}',
   subject_other text check (char_length(subject_other) <= 120),
@@ -128,11 +128,57 @@ create trigger form_responses_rate_limit
   before insert on public.form_responses
   for each row execute function public.limit_response_rate();
 
+-- ---------- 6-р асуултын чиглэлүүд (админ самбараас засна) ----------
+-- key нь хариултын info_adequacy-д хадгалагдах тогтмол түлхүүр; нэрийг (label) засахад өмнөх хариулт холбоотой хэвээр.
+-- Хасах нь active = false (өмнөх хариултууд тайланд харагдсаар байна).
+create table if not exists public.adequacy_topics (
+  id bigint generated always as identity primary key,
+  key text not null unique default ('t_' || replace(gen_random_uuid()::text, '-', ''))
+    check (char_length(key) between 1 and 40),
+  label text not null unique check (char_length(label) between 1 and 80),
+  sort int not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+alter table public.adequacy_topics enable row level security;
+
+drop policy if exists "topics public read" on public.adequacy_topics;
+create policy "topics public read" on public.adequacy_topics
+  for select to anon, authenticated using (true);
+
+drop policy if exists "topics admin insert" on public.adequacy_topics;
+create policy "topics admin insert" on public.adequacy_topics
+  for insert to authenticated with check ((select public.is_admin()));
+drop policy if exists "topics admin update" on public.adequacy_topics;
+create policy "topics admin update" on public.adequacy_topics
+  for update to authenticated using ((select public.is_admin())) with check ((select public.is_admin()));
+drop policy if exists "topics admin delete" on public.adequacy_topics;
+create policy "topics admin delete" on public.adequacy_topics
+  for delete to authenticated using ((select public.is_admin()));
+
+insert into public.adequacy_topics (key, label, sort, active) values
+  ('lessons', 'Хичээл сургалт', 1, true),
+  ('clubs', 'Дугуйлан, секц', 2, true),
+  ('goals', 'Хичээлийн жилийн зорилго, хүрэх үр дүн', 3, true),
+  ('bus', 'Автобус', 4, true),
+  ('child_protection', 'Хүүхэд хамгаалах баг', 5, true),
+  ('day_care', 'Өдөр өнжүүлэх', 6, true),
+  ('telegram', 'Telegram сувгийн ашиглалт', 7, true),
+  ('cambridge', 'Cambridge хөтөлбөр', 99, false)
+on conflict do nothing; -- дахин ажиллуулахад админы засварыг дарж бичихгүй
+
+-- info_adequacy нь {"<key>": "yes" | "partial" | "no"} хэлбэрийн объект байна
+alter table public.form_responses drop constraint if exists form_responses_info_adequacy_object;
+alter table public.form_responses add constraint form_responses_info_adequacy_object
+  check (jsonb_typeof(info_adequacy) = 'object');
+
 -- ---------- Data API эрх (шинэ төслүүдэд хүснэгт автоматаар нээгддэггүй) ----------
 -- Мөр түвшний хязгаарлалтыг дээрх RLS policy-нууд хийнэ.
 grant select on table public.admins to authenticated;
 grant select on table public.subjects to anon, authenticated;
 grant insert, update, delete on table public.subjects to authenticated;
+grant select on table public.adequacy_topics to anon, authenticated;
+grant insert, update, delete on table public.adequacy_topics to authenticated;
 grant insert on table public.form_responses to anon, authenticated;
 grant select, delete on table public.form_responses to authenticated;
 

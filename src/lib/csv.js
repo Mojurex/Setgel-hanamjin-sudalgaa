@@ -1,4 +1,4 @@
-import { ADEQUACY_TOPICS, ADEQUACY_LEVELS, COUNCIL_OPTIONS } from './constants'
+import { ADEQUACY_LEVELS, COUNCIL_OPTIONS } from './constants'
 
 const ADQ = Object.fromEntries(ADEQUACY_LEVELS.map((o) => [o.value, o.label]))
 const COUNCIL = Object.fromEntries(COUNCIL_OPTIONS.map((o) => [o.value, o.label]))
@@ -14,21 +14,28 @@ const cell = (v) => {
 const textCell = (v) => (v ? `"=""${String(v).replace(/"/g, '')}"""` : '""')
 const CLASS_COL = 2
 
-export function downloadCsv(rows, scope = '') {
+const p2 = (n) => String(n).padStart(2, '0')
+const fmtDate = (iso) => {
+  const d = new Date(iso)
+  return `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`
+}
+
+// topics: тайланд орох чиглэлүүд (lib/topics.js → topicsForReport)
+export function downloadCsv(rows, scope = '', topics = []) {
   const header = [
     'Огноо', 'Сурагчийн нэр', 'Анги бүлэг', 'Асран хамгаалагч', 'Мэдээлэл авсан суваг',
     'Зохион байгуулалт (1-5)',
-    ...ADEQUACY_TOPICS.map((t) => `Мэдээлэл: ${t.label}`),
+    ...topics.map((t) => `Мэдээлэл: ${t.label}`),
     'Ойлгомжтой хичээл', 'Эцэг эхийн зөвлөл', 'Санал хүсэлт', 'Мэйл',
   ]
   const lines = rows.map((r) => [
-    new Date(r.created_at).toLocaleString('mn-MN'),
+    fmtDate(r.created_at),
     r.student_name,
     r.class_group,
     r.guardian === 'Бусад' && r.guardian_other ? `Бусад: ${r.guardian_other}` : r.guardian,
     (r.info_sources || []).map((s) => (s === 'Бусад' && r.info_source_other ? `Бусад: ${r.info_source_other}` : s)).join('; '),
     r.org_rating ?? '',
-    ...ADEQUACY_TOPICS.map((t) => ADQ[r.info_adequacy?.[t.key]] ?? ''),
+    ...topics.map((t) => ADQ[r.info_adequacy?.[t.key]] ?? ''),
     (r.clear_subjects || []).map((s) => (s === 'Бусад' && r.subject_other ? `Бусад: ${r.subject_other}` : s)).join('; '),
     COUNCIL[r.join_council] ?? '',
     r.feedback ?? '',

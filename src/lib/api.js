@@ -1,9 +1,10 @@
 import { supabase, isDemo } from './supabase'
-import { DEFAULT_SUBJECTS } from './constants'
+import { DEFAULT_SUBJECTS, DEFAULT_TOPICS } from './constants'
 
 const DEMO_RESP = 'odorlog.demo.responses'
 const DEMO_SUBJ = 'odorlog.demo.subjects'
 const DEMO_AUTH = 'odorlog.demo.admin'
+const DEMO_TOPICS = 'odorlog.demo.topics'
 
 const read = (k, d) => {
   try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d }
@@ -68,6 +69,51 @@ export async function renameSubject(id, name) {
   const { error } = await supabase.from('subjects').update({ name }).eq('id', id)
   if (error) throw error
   return fetchSubjects()
+}
+
+// ---------- 6-р асуултын чиглэлүүд ----------
+// Хасах нь устгах биш: active=false болгоно, ингэснээр өмнөх хариултууд тайланд хэвээр харагдана.
+const bySort = (a, b) => a.sort - b.sort || a.id - b.id
+
+export async function fetchTopics() {
+  if (isDemo) return read(DEMO_TOPICS, DEFAULT_TOPICS).slice().sort(bySort)
+  const { data, error } = await supabase.from('adequacy_topics').select('id,key,label,sort,active').order('sort').order('id')
+  if (error || !data?.length) return DEFAULT_TOPICS
+  return data
+}
+
+export async function addTopic(label) {
+  const all = await fetchTopics()
+  const sort = Math.max(0, ...all.filter((t) => t.active).map((t) => t.sort)) + 1
+  if (isDemo) {
+    if (all.some((t) => t.label === label)) throw new Error('DUPLICATE')
+    const next = [...all, { id: Date.now(), key: `t_${Date.now().toString(36)}`, label, sort, active: true }]
+    write(DEMO_TOPICS, next)
+    return next.sort(bySort)
+  }
+  const { error } = await supabase.from('adequacy_topics').insert({ label, sort })
+  if (error) throw error
+  return fetchTopics()
+}
+
+async function updateTopic(id, patch) {
+  if (isDemo) {
+    const next = (await fetchTopics()).map((t) => (t.id === id ? { ...t, ...patch } : t))
+    write(DEMO_TOPICS, next)
+    return next.sort(bySort)
+  }
+  const { error } = await supabase.from('adequacy_topics').update(patch).eq('id', id)
+  if (error) throw error
+  return fetchTopics()
+}
+
+export const renameTopic = (id, label) => updateTopic(id, { label })
+export async function setTopicActive(id, active) {
+  if (!active) return updateTopic(id, { active })
+  // Сэргээсэн чиглэл жагсаалтын төгсгөлд орно
+  const all = await fetchTopics()
+  const sort = Math.max(0, ...all.filter((t) => t.active).map((t) => t.sort)) + 1
+  return updateTopic(id, { active, sort })
 }
 
 export async function fetchResponses() {

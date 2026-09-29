@@ -111,10 +111,30 @@
   .mark-check { border-radius: 6px; }
   [data-checked="true"] > .mark { border-color: #6B21A8; background: #6B21A8; }
 
+  /* Нэг эгнээний 3 сонголт (6-р асуулт) */
+  .seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 6px 4px;
+    border: 1px solid #A855F7;
+    border-radius: 10px;
+    background: #FFFFFF;
+    color: #2E0854;
+    font-size: 15px;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s, color .2s;
+  }
+  .seg:hover { border-color: #6B21A8; }
+  .seg[data-checked="true"] { background: #6B21A8; border-color: #6B21A8; color: #FFFFFF; font-weight: 700; }
+  .seg:has(input:focus-visible) { outline: 2px solid #6B21A8; outline-offset: 2px; }
+
   /* Алдаа: бараан ягаан хүрээ + тэмдэг + текст (өөр өнгө хэрэглэхгүй) */
   .input[aria-invalid="true"] { border: 2px solid #2E0854; }
-  .is-invalid > .q-body > .choice-group,
-  .row-invalid > .choice-group {
+  .is-invalid > .q-body > .choice-group {
     border: 2px solid #2E0854;
     border-radius: 16px;
     padding: 8px;

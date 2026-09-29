@@ -135,26 +135,39 @@ export function RatingCircles({ name, value, onChange }) {
   )
 }
 
-/** Мөр бүрт Тийм / Хэсэгчлэн / Үгүй */
+/** Чиглэл бүр жижиг карт: нэр + нэг эгнээнд Тийм / Хэсэгчлэн / Үгүй */
 export function Matrix({ topics, values, onChange, missing = [] }) {
+  const baseId = useId()
   return (
-    <div className="flex flex-col gap-6">
-      {topics.map((t) => (
-        <fieldset key={t.key} className={`m-0 min-w-0 border-0 p-0 ${missing.includes(t.key) ? 'row-invalid' : ''}`}>
-          <legend className="mb-2 p-0 text-[17px] text-ink">{t.label}</legend>
-          <div className="choice-group grid grid-cols-3 gap-2">
-            {ADEQUACY_LEVELS.map((l) => {
-              const checked = values[t.key] === l.value
-              return (
-                <label key={l.value} className="choice justify-center px-2 text-center" data-checked={checked}>
-                  <input type="radio" className="sr-only" name={`adq-${t.key}`} checked={checked} onChange={() => onChange(t.key, l.value)} />
-                  <span className="text-[16px]">{l.label}</span>
-                </label>
-              )
-            })}
+    <div className="flex flex-col gap-2">
+      {topics.map((t, i) => {
+        const invalid = missing.includes(t.key)
+        const labelId = `${baseId}-${i}`
+        return (
+          <div
+            key={t.key}
+            role="radiogroup"
+            aria-labelledby={labelId}
+            aria-invalid={invalid || undefined}
+            className={`rounded-xl border bg-white p-3 sm:flex sm:items-center sm:gap-4 sm:py-3 sm:pl-4 sm:pr-3 ${invalid ? 'border-ink shadow-[inset_0_0_0_1px_#2E0854]' : 'border-line'}`}
+          >
+            <span id={labelId} className="mb-2 block text-[16px] font-bold leading-snug text-ink sm:mb-0 sm:flex-1">
+              {t.label}
+            </span>
+            <div className="grid grid-cols-3 gap-1.5 sm:w-[312px] sm:shrink-0">
+              {ADEQUACY_LEVELS.map((l) => {
+                const checked = values[t.key] === l.value
+                return (
+                  <label key={l.value} className="seg" data-checked={checked}>
+                    <input type="radio" className="sr-only" name={`adq-${t.key}`} checked={checked} onChange={() => onChange(t.key, l.value)} />
+                    {l.label}
+                  </label>
+                )
+              })}
+            </div>
           </div>
-        </fieldset>
-      ))}
+        )
+      })}
     </div>
   )
 }

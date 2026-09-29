@@ -7,10 +7,10 @@ import PrivacyNote from '../components/PrivacyNote'
 import ThankYou from '../components/ThankYou'
 import { Question, RadioList, CheckboxList, RatingCircles, Matrix, CounterTextarea } from '../components/fields'
 import {
-  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, ADEQUACY_TOPICS, COUNCIL_OPTIONS,
+  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, DEFAULT_TOPICS, COUNCIL_OPTIONS,
   FEEDBACK_MAX, EMAIL_RE, CLASS_GROUPS, GRADES, groupsOfGrade,
 } from '../lib/constants'
-import { fetchSubjects, submitResponse } from '../lib/api'
+import { fetchSubjects, fetchTopics, submitResponse } from '../lib/api'
 import { checkGuard, getDeviceId, hasSentStudent, recordSent } from '../lib/guard'
 import { isDemo } from '../lib/supabase'
 
@@ -53,6 +53,7 @@ export default function Survey() {
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [subjects, setSubjects] = useState([])
+  const [topics, setTopics] = useState(() => DEFAULT_TOPICS.filter((t) => t.active))
   const [sending, setSending] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [dupConfirm, setDupConfirm] = useState(false)
@@ -63,6 +64,7 @@ export default function Survey() {
 
   useEffect(() => {
     fetchSubjects().then((s) => setSubjects(s.map((x) => x.name)))
+    fetchTopics().then((t) => setTopics(t.filter((x) => x.active)))
   }, [])
 
   const onReveal = useCallback(() => setRevealed(true), [])
@@ -98,8 +100,8 @@ export default function Survey() {
       if (!form.info_sources.length) e.info_sources = REQUIRED_MSG
       else if (form.info_sources.includes(OTHER) && !form.info_source_other.trim()) e.info_sources = '“Бусад” гэснийг бичнэ үү'
       if (!form.org_rating) e.org_rating = 'Оноогоо сонгоорой'
-      const missing = ADEQUACY_TOPICS.filter((t) => !form.info_adequacy[t.key])
-      if (missing.length) e.info_adequacy = missing.length === ADEQUACY_TOPICS.length ? REQUIRED_MSG : 'Бүх мөрөнд хариулна уу'
+      const missing = topics.filter((t) => !form.info_adequacy[t.key])
+      if (missing.length) e.info_adequacy = missing.length === topics.length ? REQUIRED_MSG : 'Бүх чиглэлд хариулна уу'
       if (form.clear_subjects.includes(OTHER) && !form.subject_other.trim()) e.clear_subjects = '“Бусад” хичээлээ бичнэ үү'
     }
     if (s === 2) {
@@ -154,7 +156,8 @@ export default function Survey() {
         info_sources: form.info_sources,
         info_source_other: form.info_sources.includes(OTHER) ? form.info_source_other.trim() : null,
         org_rating: form.org_rating,
-        info_adequacy: form.info_adequacy,
+        // Зөвхөн одоо идэвхтэй чиглэлүүдийн хариулт
+        info_adequacy: Object.fromEntries(topics.filter((t) => form.info_adequacy[t.key]).map((t) => [t.key, form.info_adequacy[t.key]])),
         clear_subjects: form.clear_subjects,
         subject_other: form.clear_subjects.includes(OTHER) ? form.subject_other.trim() : null,
         join_council: form.join_council,
@@ -233,7 +236,7 @@ export default function Survey() {
 
               <div className="mt-10 flex flex-col gap-12">
                 {step === 0 && <Step1 form={form} set={set} setGrade={setGrade} errors={errors} />}
-                {step === 1 && <Step2 form={form} set={set} toggle={toggle} errors={errors} subjects={subjects} />}
+                {step === 1 && <Step2 form={form} set={set} toggle={toggle} errors={errors} subjects={subjects} topics={topics} />}
                 {step === 2 && <Step3 form={form} set={set} errors={errors} />}
               </div>
 
@@ -380,9 +383,9 @@ function Step1({ form, set, setGrade, errors }) {
   )
 }
 
-function Step2({ form, set, toggle, errors, subjects }) {
+function Step2({ form, set, toggle, errors, subjects, topics }) {
   const subjectOptions = [...subjects.filter((s) => s !== OTHER), OTHER]
-  const missing = errors.info_adequacy ? ADEQUACY_TOPICS.filter((t) => !form.info_adequacy[t.key]).map((t) => t.key) : []
+  const missing = errors.info_adequacy ? topics.filter((t) => !form.info_adequacy[t.key]).map((t) => t.key) : []
   return (
     <>
       <Question no={4} title="Өдөрлөгийн талаарх мэдээллийг хаанаас авсан бэ?" hint="Хэд хэдэн хариулт сонгож болно." error={errors.info_sources} as="fieldset">
@@ -401,14 +404,16 @@ function Step2({ form, set, toggle, errors, subjects }) {
         <RatingCircles name="org_rating" value={form.org_rating} onChange={(v) => set('org_rating', v)} />
       </Question>
 
-      <Question no={6} title="Дараах чиглэлээр хангалттай мэдээлэл авч чадсан уу?" error={errors.info_adequacy} as="fieldset">
-        <Matrix
-          topics={ADEQUACY_TOPICS}
-          values={form.info_adequacy}
-          missing={missing}
-          onChange={(k, v) => set('info_adequacy', { ...form.info_adequacy, [k]: v })}
-        />
-      </Question>
+      {topics.length > 0 && (
+        <Question no={6} title="Дараах чиглэлээр хангалттай мэдээлэл авч чадсан уу?" error={errors.info_adequacy} as="fieldset">
+          <Matrix
+            topics={topics}
+            values={form.info_adequacy}
+            missing={missing}
+            onChange={(k, v) => set('info_adequacy', { ...form.info_adequacy, [k]: v })}
+          />
+        </Question>
+      )}
 
       <Question no={7} title="Аль хичээлийн мэдээлэл ойлгомжтой байсан бэ?" hint="Хэд хэдэн хичээл сонгож болно." optional error={errors.clear_subjects} as="fieldset">
         <CheckboxList options={subjectOptions} values={form.clear_subjects} onToggle={(v) => toggle('clear_subjects', v)} />

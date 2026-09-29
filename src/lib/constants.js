@@ -10,12 +10,18 @@ export const INFO_SOURCES = [
   'Бусад',
 ]
 
-export const ADEQUACY_TOPICS = [
-  { key: 'lessons', label: 'Хичээл сургалт' },
-  { key: 'clubs', label: 'Дугуйлан, секц' },
-  { key: 'cambridge', label: 'Cambridge хөтөлбөр' },
-  { key: 'goals', label: 'Хичээлийн жилийн зорилго, хүрэх үр дүн' },
-]
+// 6-р асуултын чиглэлүүд Supabase-ийн adequacy_topics хүснэгтэд байна (админ самбараас засна).
+// Энэ жагсаалт зөвхөн демо горим эсвэл хүснэгт уншигдахгүй үеийн нөөц. key нь хариултад хадгалагдах тогтмол түлхүүр.
+export const DEFAULT_TOPICS = [
+  { key: 'lessons', label: 'Хичээл сургалт', active: true },
+  { key: 'clubs', label: 'Дугуйлан, секц', active: true },
+  { key: 'goals', label: 'Хичээлийн жилийн зорилго, хүрэх үр дүн', active: true },
+  { key: 'bus', label: 'Автобус', active: true },
+  { key: 'child_protection', label: 'Хүүхэд хамгаалах баг', active: true },
+  { key: 'day_care', label: 'Өдөр өнжүүлэх', active: true },
+  { key: 'telegram', label: 'Telegram сувгийн ашиглалт', active: true },
+  { key: 'cambridge', label: 'Cambridge хөтөлбөр', active: false },
+].map((t, i) => ({ id: -(i + 1), sort: t.active ? i + 1 : 99, ...t }))
 
 export const ADEQUACY_LEVELS = [
   { value: 'yes', label: 'Тийм' },
