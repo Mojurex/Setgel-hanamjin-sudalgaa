@@ -107,9 +107,10 @@ function Face() {
   return (
     <div className="absolute inset-0 grid place-items-center px-6 text-center text-white">
       <div className="relative">
-        <div className="absolute inset-x-0 bottom-full mb-5 flex flex-col items-center gap-4 sm:mb-6">
+        <div className="absolute inset-x-0 bottom-full mb-3 flex flex-col items-center sm:mb-4">
           <Logo size={72} decorative className="h-14 w-14 sm:h-[72px] sm:w-[72px]" />
-          <p className="text-[15px] tracking-[0.04em] text-white/85 sm:text-[17px]">{SCHOOL_NAME}</p>
+          <p className="mt-4 text-[15px] tracking-[0.04em] text-white/85 sm:text-[17px]">{SCHOOL_NAME}</p>
+          <p className="mt-5 whitespace-nowrap text-[20px] font-bold tracking-[0.24em] sm:mt-6 sm:text-[28px]">PARENTS DAY</p>
         </div>
         <p className="whitespace-nowrap text-[11vw] font-bold leading-[1.02] tracking-[0.02em] sm:text-[clamp(40px,6vw,80px)]">
           ӨДӨРЛӨГИЙН<br className="sm:hidden" /><span className="hidden sm:inline"> </span>СУДАЛГАА

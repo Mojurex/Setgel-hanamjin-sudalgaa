@@ -49,7 +49,7 @@ export function downloadCsv(rows, scope = '', topics = []) {
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
   const date = new Date().toISOString().slice(0, 10)
-  a.download = `odorlog-sudalgaa_${scope.replace(/\s+/g, '-')}_${date}.csv`
+  a.download = `parents-day-sudalgaa_${scope.replace(/\s+/g, '-')}_${date}.csv`
   document.body.appendChild(a)
   a.click()
   a.remove()

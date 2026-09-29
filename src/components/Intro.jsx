@@ -19,7 +19,7 @@ export default function Intro({ revealed, onStart }) {
       <Brand size={40} className="mx-auto w-full max-w-[640px] pt-6" />
       <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center py-16 text-center">
         <motion.h1 variants={rise(0)} initial="hidden" animate={state} className="text-[34px] font-bold text-ink sm:text-[44px]">
-          Өдөрлөгийн судалгаа нээгдлээ
+          Parents Day өдөрлөгийн судалгаа нээгдлээ
         </motion.h1>
         <motion.p variants={rise(0.08)} initial="hidden" animate={state} className="mt-4 text-[18px] text-plum">
           Санал хүсэлтээ үлдээгээрэй

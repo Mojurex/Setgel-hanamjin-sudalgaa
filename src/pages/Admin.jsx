@@ -128,7 +128,7 @@ function Dashboard({ onLogout }) {
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Brand size={36} />
-          <h1 className="mt-3 text-[30px] font-bold text-ink sm:text-[36px]">Өдөрлөгийн судалгааны үр дүн</h1>
+          <h1 className="mt-3 text-[30px] font-bold text-ink sm:text-[36px]">Parents Day өдөрлөгийн судалгааны үр дүн</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" className="btn btn-secondary" onClick={load} disabled={loading}>{loading ? 'Ачаалж байна…' : 'Шинэчлэх'}</button>
