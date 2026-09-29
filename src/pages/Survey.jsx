@@ -199,7 +199,10 @@ export default function Survey() {
 
   return (
     <main className="mx-auto w-full max-w-[640px] px-4 pb-20 pt-6">
-      <Brand size={36} />
+      <div className="flex items-center justify-between gap-3">
+        <Brand size={36} />
+        <span className="whitespace-nowrap rounded-full border border-lilac bg-white px-3 py-1 text-[14px] font-bold text-plum">Parents Day</span>
+      </div>
 
       {step === DONE && <ThankYou onRestart={restart} />}
 

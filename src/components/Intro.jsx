@@ -18,8 +18,14 @@ export default function Intro({ revealed, onStart }) {
     >
       <Brand size={40} className="mx-auto w-full max-w-[640px] pt-6" />
       <div className="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center py-16 text-center">
-        <motion.h1 variants={rise(0)} initial="hidden" animate={state} className="text-[34px] font-bold text-ink sm:text-[44px]">
-          Parents Day өдөрлөгийн судалгаа нээгдлээ
+        <motion.h1 variants={rise(0)} initial="hidden" animate={state} className="font-bold text-ink">
+          <span
+            className="block bg-clip-text pb-2 text-[64px] leading-[0.95] tracking-[-0.02em] text-transparent sm:text-[96px]"
+            style={{ backgroundImage: 'linear-gradient(100deg, #2E0854 0%, #6B21A8 45%, #A855F7 100%)' }}
+          >
+            Parents Day
+          </span>
+          <span className="mt-4 block text-[24px] leading-snug sm:text-[30px]">Өдөрлөгийн судалгаа нээгдлээ</span>
         </motion.h1>
         <motion.p variants={rise(0.08)} initial="hidden" animate={state} className="mt-4 text-[18px] text-plum">
           Санал хүсэлтээ үлдээгээрэй
