@@ -16,7 +16,6 @@ import { isDemo } from '../lib/supabase'
 
 const REQUIRED_MSG = 'Энэ хэсгийг бөглөөрэй'
 const OTHER = 'Бусад'
-const PORTAL_KEY = 'odorlog.portalSeen'
 const INTRO = -1
 const DONE = 3
 
@@ -42,10 +41,6 @@ const EMPTY = {
   feedback: '',
   email: '',
   website: '', // honeypot
-}
-
-const portalSeen = () => {
-  try { return localStorage.getItem(PORTAL_KEY) === '1' } catch { return false }
 }
 
 export default function Survey() {
@@ -176,7 +171,7 @@ export default function Survey() {
     goTo(0)
   }
 
-  if (step === INTRO) return <Landing startOpen={portalSeen()} onStart={() => goTo(0)} />
+  if (step === INTRO) return <Landing onStart={() => goTo(0)} />
 
   const blocked = !guard.ok && step !== DONE
   const cur = STEPS[step]
