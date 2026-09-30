@@ -1,7 +1,7 @@
-import { ADEQUACY_LEVELS, COUNCIL_OPTIONS } from './constants'
+import { ADEQUACY_LEVELS, COUNCIL_LABELS } from './constants'
 
 const ADQ = Object.fromEntries(ADEQUACY_LEVELS.map((o) => [o.value, o.label]))
-const COUNCIL = Object.fromEntries(COUNCIL_OPTIONS.map((o) => [o.value, o.label]))
+const COUNCIL = COUNCIL_LABELS
 
 const cell = (v) => {
   const s = v == null ? '' : String(v)

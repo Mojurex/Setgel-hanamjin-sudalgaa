@@ -51,7 +51,9 @@ function loadDraft() {
     if (!d?.form) return null
     // Алхмыг зөвхөн тухайн хуудсыг шинэчилсэн үед сэргээнэ (шинээр ороход нүүр хуудаснаас эхэлнэ)
     const s = window.history.state?.surveyStep
-    return { step: Number.isInteger(s) && s >= 0 && s < DONE ? s : INTRO, form: { ...EMPTY, ...d.form } }
+    const form = { ...EMPTY, ...d.form }
+    if (!COUNCIL_OPTIONS.some((o) => o.value === form.join_council)) form.join_council = ''
+    return { step: Number.isInteger(s) && s >= 0 && s < DONE ? s : INTRO, form }
   } catch { /* хадгалах сан хаалттай */ }
   return null
 }
@@ -370,7 +372,7 @@ function Step1({ form, set, setGrade, errors }) {
   const groups = groupsOfGrade(form.grade)
   return (
     <>
-      <Question no={1} title="Сурагчийн нэр" error={errors.student_name} labelFor="student_name">
+      <Question no={1} title="Сурагчийн нэр" hint="Зөвхөн монгол үсгээр бичнэ үү." error={errors.student_name} labelFor="student_name">
         {({ describedBy }) => (
           <input
             id="student_name"
@@ -487,11 +489,11 @@ function Step2({ form, set, setAdequacy, toggle, errors, subjects, topics }) {
 }
 
 function Step3({ form, set, errors }) {
-  const wantsContact = form.join_council === 'yes' || form.join_council === 'maybe'
+  const wantsContact = form.join_council === 'yes'
   return (
     <>
       <Question no={8} title="Та эцэг эхийн зөвлөлд нэгдэх хүсэлтэй байна уу?" error={errors.join_council} as="fieldset">
-        <RadioList name="join_council" options={COUNCIL_OPTIONS} value={form.join_council} onChange={(v) => set('join_council', v)} columns="sm:grid-cols-3" />
+        <RadioList name="join_council" options={COUNCIL_OPTIONS} value={form.join_council} onChange={(v) => set('join_council', v)} columns="sm:grid-cols-2" />
       </Question>
 
       <Question no={9} title="Санал хүсэлт" hint="Дэлгэрэнгүй бичиж болно." optional error={errors.feedback} labelFor="feedback">

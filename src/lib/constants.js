@@ -32,8 +32,9 @@ export const ADEQUACY_LEVELS = [
 export const COUNCIL_OPTIONS = [
   { value: 'yes', label: 'Тийм' },
   { value: 'no', label: 'Үгүй' },
-  { value: 'maybe', label: 'Бодоод үзнэ' },
 ]
+// Тайланд: "Бодоод үзнэ" сонголтыг хассан ч өмнөх хариултууд харагдсаар байна
+export const COUNCIL_LABELS = { yes: 'Тийм', no: 'Үгүй', maybe: 'Бодоод үзнэ' }
 
 export const RATING_LABELS = ['Муу', 'Дунд зэрэг', 'Хэвийн', 'Сайн', 'Маш сайн']
 

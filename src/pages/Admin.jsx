@@ -3,7 +3,7 @@ import { ChartPanel, HBar, StackedAdequacy, Donut } from '../components/Charts'
 import ListEditor from '../components/ListEditor'
 import Logo, { Brand } from '../components/Logo'
 import {
-  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, ADEQUACY_LEVELS, COUNCIL_OPTIONS,
+  SCHOOL_NAME, GUARDIANS, INFO_SOURCES, ADEQUACY_LEVELS, COUNCIL_LABELS,
   CLASS_GROUPS, GRADES, gradeOf,
 } from '../lib/constants'
 import {
@@ -14,7 +14,7 @@ import { topicsForReport } from '../lib/topics'
 import { isDemo } from '../lib/supabase'
 import { downloadCsv } from '../lib/csv'
 
-const COUNCIL_LABEL = Object.fromEntries(COUNCIL_OPTIONS.map((o) => [o.value, o.label]))
+const COUNCIL_LABEL = COUNCIL_LABELS
 const p2 = (n) => String(n).padStart(2, '0')
 const fmtDate = (s) => {
   const d = new Date(s)
@@ -174,7 +174,7 @@ function Dashboard({ onLogout }) {
       <section aria-label="Гол үзүүлэлт" className="panel mt-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Нийт хариулт" value={stats.total} className="border-b border-r border-line lg:border-b-0" />
         <Stat label="Зохион байгуулалтын дундаж оноо" value={stats.avg ? stats.avg.toFixed(1) : '–'} suffix="/ 5" className="border-b border-line lg:border-b-0 lg:border-r" />
-        <Stat label="Зөвлөлд нэгдэх хүсэлтэй" value={stats.councilYes} sub={`Бодоод үзнэ: ${stats.councilMaybe}`} className="border-r border-line" />
+        <Stat label="Зөвлөлд нэгдэх хүсэлтэй" value={stats.councilYes} sub={stats.councilMaybe ? `Бодоод үзнэ (өмнөх): ${stats.councilMaybe}` : undefined} className="border-r border-line" />
         <Stat label="Санал хүсэлт үлдээсэн" value={stats.feedbackCount} />
       </section>
 
