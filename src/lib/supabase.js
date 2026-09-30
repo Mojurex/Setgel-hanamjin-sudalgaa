@@ -7,3 +7,6 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VIT
 // .env тохируулаагүй бол demo горим (өгөгдөл зөвхөн энэ хөтөчийн localStorage-д)
 export const supabase = url && key ? createClient(url, key) : null
 export const isDemo = !supabase
+// Байршуулсан сайт дээр түлхүүр алга бол хариултыг хөтөчид чимээгүй хадгалахгүй, алдаа гаргана
+export const isMisconfigured = isDemo && import.meta.env.PROD
+if (isMisconfigured) console.error('Supabase тохиргоо алга: VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY')

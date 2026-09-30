@@ -48,7 +48,11 @@ function Login({ onDone }) {
     try {
       onDone(await signIn(email.trim(), password))
     } catch (ex) {
-      setErr(ex.message === 'NOT_ADMIN' ? 'Энэ хэрэглэгчид админ эрх олгоогүй байна.' : 'Мэйл эсвэл нууц үг буруу байна.')
+      setErr({
+        NOT_ADMIN: 'Энэ хэрэглэгчид админ эрх олгоогүй байна.',
+        NETWORK: 'Сервертэй холбогдож чадсангүй. Интернэт холболтоо шалгаад дахин оролдоно уу.',
+        NOT_CONFIGURED: 'Сайтын Supabase тохиргоо дутуу байна (Vercel-ийн Environment Variables).',
+      }[ex.message] || 'Мэйл эсвэл нууц үг буруу байна.')
     } finally {
       setBusy(false)
     }

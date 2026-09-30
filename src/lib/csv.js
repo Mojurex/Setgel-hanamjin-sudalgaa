@@ -6,7 +6,7 @@ const COUNCIL = Object.fromEntries(COUNCIL_OPTIONS.map((o) => [o.value, o.label]
 const cell = (v) => {
   const s = v == null ? '' : String(v)
   // Excel-ийн томьёо гүйцэтгэхээс сэргийлэх
-  const safe = /^[=+\-@]/.test(s) ? `'${s}` : s
+  const safe = /^[=+\-@\t\r]/.test(s) ? `'${s}` : s
   return `"${safe.replace(/"/g, '""')}"`
 }
 
@@ -17,7 +17,7 @@ const CLASS_COL = 2
 const p2 = (n) => String(n).padStart(2, '0')
 const fmtDate = (iso) => {
   const d = new Date(iso)
-  return `${d.getFullYear()}.${p2(d.getMonth() + 1)}.${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`
+  return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`
 }
 
 // topics: тайланд орох чиглэлүүд (lib/topics.js → topicsForReport)
@@ -48,7 +48,8 @@ export function downloadCsv(rows, scope = '', topics = []) {
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
-  const date = new Date().toISOString().slice(0, 10)
+  const now = new Date()
+  const date = `${now.getFullYear()}-${p2(now.getMonth() + 1)}-${p2(now.getDate())}` // UTC биш, орон нутгийн огноо
   a.download = `parents-day-sudalgaa_${scope.replace(/\s+/g, '-')}_${date}.csv`
   document.body.appendChild(a)
   a.click()

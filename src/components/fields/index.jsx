@@ -104,14 +104,15 @@ export function CheckboxList({ options, values, onToggle, columns = 'sm:grid-col
 export function RatingCircles({ name, value, onChange }) {
   return (
     <div className="choice-group">
-      <div className="flex justify-between gap-2 sm:justify-start sm:gap-4">
+      <div className="flex justify-between gap-1 sm:justify-start sm:gap-4">
         {[1, 2, 3, 4, 5].map((n) => {
           const checked = value === n
           return (
             <label
               key={n}
               data-checked={checked}
-              className="grid h-[54px] w-[54px] cursor-pointer place-items-center rounded-full border border-orchid bg-white text-[19px] font-bold text-ink transition-colors hover:border-plum has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-plum data-[checked=true]:border-plum data-[checked=true]:bg-plum data-[checked=true]:text-white"
+              data-rating
+              className="grid h-[54px] w-[54px] shrink-0 cursor-pointer place-items-center rounded-full border border-orchid bg-white text-[19px] font-bold text-ink transition-colors hover:border-plum has-[input:focus-visible]:outline-2 has-[input:focus-visible]:outline-offset-2 has-[input:focus-visible]:outline-plum data-[checked=true]:border-plum data-[checked=true]:bg-plum data-[checked=true]:text-white"
             >
               <input
                 type="radio"

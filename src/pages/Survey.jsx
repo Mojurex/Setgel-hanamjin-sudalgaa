@@ -18,6 +18,7 @@ const REQUIRED_MSG = 'Энэ хэсгийг бөглөөрэй'
 const OTHER = 'Бусад'
 const INTRO = -1
 const DONE = 3
+const DRAFT_KEY = 'odorlog.draft'
 
 const STEPS = [
   { title: 'Үндсэн мэдээлэл', lead: 'Хүүхдийнхээ мэдээллийг оруулна уу.' },
@@ -43,9 +44,33 @@ const EMPTY = {
   website: '', // honeypot
 }
 
+// Хуудас шинэчлэх, эсвэл Telegram/утасны хөтөч дахин ачаалахад бөглөсөн хариулт алдагдахгүй
+function loadDraft() {
+  try {
+    const d = JSON.parse(sessionStorage.getItem(DRAFT_KEY))
+    if (!d?.form) return null
+    // Алхмыг зөвхөн тухайн хуудсыг шинэчилсэн үед сэргээнэ (шинээр ороход нүүр хуудаснаас эхэлнэ)
+    const s = window.history.state?.surveyStep
+    return { step: Number.isInteger(s) && s >= 0 && s < DONE ? s : INTRO, form: { ...EMPTY, ...d.form } }
+  } catch { /* хадгалах сан хаалттай */ }
+  return null
+}
+function saveDraft(step, form) {
+  try {
+    if (step >= 0 && step < DONE) sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form }))
+    else if (step === DONE) sessionStorage.removeItem(DRAFT_KEY)
+  } catch { /* хадгалах сан хаалттай */ }
+}
+const pushStep = (n, replace = false) => {
+  const state = { ...window.history.state, surveyStep: n }
+  if (replace) window.history.replaceState(state, '')
+  else window.history.pushState(state, '')
+}
+
 export default function Survey() {
-  const [step, setStep] = useState(INTRO)
-  const [form, setForm] = useState(EMPTY)
+  const [draft] = useState(loadDraft)
+  const [step, setStep] = useState(draft?.step ?? INTRO)
+  const [form, setForm] = useState(draft?.form ?? EMPTY)
   const [errors, setErrors] = useState({})
   const [subjects, setSubjects] = useState([])
   const [topics, setTopics] = useState(() => DEFAULT_TOPICS.filter((t) => t.active))
@@ -54,21 +79,60 @@ export default function Survey() {
   const [dupConfirm, setDupConfirm] = useState(false)
   const [guard, setGuard] = useState(() => checkGuard())
   const headRef = useRef(null)
+  const onPop = useRef(null)
 
   useEffect(() => {
     fetchSubjects().then((s) => setSubjects(s.map((x) => x.name)))
     fetchTopics().then((t) => setTopics(t.filter((x) => x.active)))
   }, [])
 
+  useEffect(() => saveDraft(step, form), [step, form])
+
+  // Хүлээх хугацаа дуусмагц блокыг өөрөө арилгана
+  useEffect(() => {
+    if (guard.ok) return undefined
+    const id = setInterval(() => setGuard(checkGuard()), 30000)
+    return () => clearInterval(id)
+  }, [guard.ok])
+
+  // Утасны "буцах" (Android товч, iOS шудрах) нэг алхам ухраана, сайтаас гаргахгүй
+  useEffect(() => {
+    pushStep(step, true)
+    const handler = (e) => onPop.current?.(e)
+    window.addEventListener('popstate', handler)
+    return () => window.removeEventListener('popstate', handler)
+  }, [])
+  onPop.current = (e) => {
+    const target = e.state?.surveyStep ?? INTRO
+    if (step === DONE) { resetForm(); setStep(INTRO); pushStep(INTRO, true); return }
+    if (target > step) {
+      // Урагш: зөвхөн одоогийн алхам бүрэн бол
+      const errs = validate(step)
+      if (target !== step + 1 || Object.keys(errs).length) { pushStep(step, true); if (Object.keys(errs).length) fail(errs); return }
+    }
+    setErrors({})
+    setStep(target)
+    window.scrollTo({ top: 0 })
+    setTimeout(() => headRef.current?.focus({ preventScroll: true }), 300)
+  }
+
   // errKey — энэ утга өөрчлөгдөхөд арилгах алдааны түлхүүр
   const set = (k, v, errKey = k) => {
     setForm((f) => ({ ...f, [k]: v }))
     if (errors[errKey]) setErrors((e) => ({ ...e, [errKey]: undefined }))
+    if (k === 'student_name' || k === 'group') setDupConfirm(false)
+  }
+  // 6-р асуулт: бүх мөрөнд хариулах хүртэл хариулаагүй мөрүүд тодорсон хэвээр
+  const setAdequacy = (key, v) => {
+    const next = { ...form.info_adequacy, [key]: v }
+    setForm((f) => ({ ...f, info_adequacy: next }))
+    if (errors.info_adequacy && topics.every((t) => next[t.key])) setErrors((e) => ({ ...e, info_adequacy: undefined }))
   }
   // Анги солиход бүлгийг дахин тохируулна (ганц бүлэгтэй бол автоматаар сонгоно)
   const setGrade = (grade) => {
     const opts = groupsOfGrade(grade)
     setForm((f) => ({ ...f, grade, group: opts.length === 1 ? opts[0] : opts.includes(f.group) ? f.group : '' }))
+    setDupConfirm(false)
     if (errors.class_group) setErrors((e) => ({ ...e, class_group: undefined }))
   }
   const toggle = (k, v) => set(k, form[k].includes(v) ? form[k].filter((x) => x !== v) : [...form[k], v])
@@ -103,12 +167,16 @@ export default function Survey() {
     requestAnimationFrame(() => {
       const el = document.querySelector('.is-invalid')
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      const target = el?.querySelector('[aria-invalid="true"]') || el?.querySelector('input:not(.sr-only), select, textarea, input')
+      const inv = el?.querySelector('[aria-invalid="true"]')
+      // 6-р асуултын мөр (div) focus авахгүй тул доторх эхний сонголт руу
+      const target = (inv?.matches('input, select, textarea') ? inv : inv?.querySelector('input'))
+        || el?.querySelector('input:not(.sr-only), select, textarea, input')
       target?.focus({ preventScroll: true })
     })
   }
 
   function goTo(n) {
+    pushStep(n)
     setStep(n)
     window.scrollTo({ top: 0 })
     setTimeout(() => headRef.current?.focus({ preventScroll: true }), 300)
@@ -156,18 +224,23 @@ export default function Survey() {
       goTo(DONE)
     } catch (err) {
       if (err.message === 'RATE_LIMIT') setGuard({ ok: false, waitMin: 10 })
+      else if (err.message === 'NOT_CONFIGURED') setSubmitError('Судалгааг одоогоор хүлээн авах боломжгүй байна. Сургуульд мэдэгдэнэ үү.')
       else setSubmitError('Илгээж чадсангүй. Интернэт холболтоо шалгаад дахин илгээнэ үү.')
     } finally {
       setSending(false)
     }
   }
 
-  function restart() {
+  function resetForm() {
     setForm(EMPTY)
     setErrors({})
     setDupConfirm(false)
     setSubmitError('')
     setGuard(checkGuard())
+  }
+
+  function restart() {
+    resetForm()
     goTo(0)
   }
 
@@ -219,7 +292,7 @@ export default function Survey() {
 
               <div className="mt-10 flex flex-col gap-12">
                 {step === 0 && <Step1 form={form} set={set} setGrade={setGrade} errors={errors} />}
-                {step === 1 && <Step2 form={form} set={set} toggle={toggle} errors={errors} subjects={subjects} topics={topics} />}
+                {step === 1 && <Step2 form={form} set={set} setAdequacy={setAdequacy} toggle={toggle} errors={errors} subjects={subjects} topics={topics} />}
                 {step === 2 && <Step3 form={form} set={set} errors={errors} />}
               </div>
 
@@ -366,7 +439,7 @@ function Step1({ form, set, setGrade, errors }) {
   )
 }
 
-function Step2({ form, set, toggle, errors, subjects, topics }) {
+function Step2({ form, set, setAdequacy, toggle, errors, subjects, topics }) {
   const subjectOptions = [...subjects.filter((s) => s !== OTHER), OTHER]
   const missing = errors.info_adequacy ? topics.filter((t) => !form.info_adequacy[t.key]).map((t) => t.key) : []
   return (
@@ -393,7 +466,7 @@ function Step2({ form, set, toggle, errors, subjects, topics }) {
             topics={topics}
             values={form.info_adequacy}
             missing={missing}
-            onChange={(k, v) => set('info_adequacy', { ...form.info_adequacy, [k]: v })}
+            onChange={setAdequacy}
           />
         </Question>
       )}

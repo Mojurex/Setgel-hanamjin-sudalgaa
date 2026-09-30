@@ -51,11 +51,8 @@
   .btn:active:not(:disabled) { transform: scale(0.98); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
   .btn-primary { background: #6B21A8; color: #FFFFFF; border: 1px solid #6B21A8; }
-  .btn-primary:hover:not(:disabled) { background: #2E0854; border-color: #2E0854; }
   .btn-secondary { background: #FFFFFF; color: #6B21A8; border: 1px solid #D8B4FE; }
-  .btn-secondary:hover:not(:disabled) { border-color: #6B21A8; }
   .btn-text { background: transparent; color: #6B21A8; border: 1px solid transparent; padding: 0 12px; }
-  .btn-text:hover:not(:disabled) { color: #2E0854; text-decoration: underline; text-underline-offset: 4px; }
 
   /* ---------- Оролт ---------- */
   .input {
@@ -70,7 +67,7 @@
     transition: border-color .2s, box-shadow .2s;
   }
   .input::placeholder { color: #8A5BC0; }
-  .input:focus { outline: none; border-color: #6B21A8; box-shadow: 0 0 0 1px #6B21A8; }
+  .input:focus { outline: 2px solid transparent; border-color: #6B21A8; box-shadow: 0 0 0 1px #6B21A8; }
   .input:disabled { background: #F5F0FF; border-color: #D8B4FE; cursor: not-allowed; }
   select.input {
     appearance: none;
@@ -93,7 +90,6 @@
     cursor: pointer;
     transition: border-color .2s, box-shadow .2s;
   }
-  .choice:hover { border-color: #A855F7; }
   .choice[data-checked="true"] { border-color: #6B21A8; box-shadow: inset 0 0 0 1px #6B21A8; }
   .choice:has(input:focus-visible) { outline: 2px solid #6B21A8; outline-offset: 2px; }
 
@@ -128,7 +124,6 @@
     cursor: pointer;
     transition: background-color .2s, border-color .2s, color .2s;
   }
-  .seg:hover { border-color: #6B21A8; }
   .seg[data-checked="true"] { background: #6B21A8; border-color: #6B21A8; color: #FFFFFF; font-weight: 700; }
   .seg:has(input:focus-visible) { outline: 2px solid #6B21A8; outline-offset: 2px; }
 
@@ -141,9 +136,28 @@
   }
 
   .panel {
+    min-width: 0; /* grid дотор графикууд агшиж чадна */
     background: #FFFFFF;
     border: 1px solid #E7DAFB;
     border-radius: 12px;
+  }
+
+  /* Hover зөвхөн хулганатай төхөөрөмжид (утсанд товшсоны дараа "наалдахгүй") */
+  @media (hover: hover) {
+    .btn-primary:hover:not(:disabled) { background: #2E0854; border-color: #2E0854; }
+    .btn-secondary:hover:not(:disabled) { border-color: #6B21A8; }
+    .btn-text:hover:not(:disabled) { color: #2E0854; text-decoration: underline; text-underline-offset: 4px; }
+    .choice:hover { border-color: #A855F7; }
+    .seg:hover:not([data-checked="true"]) { border-color: #6B21A8; }
+  }
+
+  /* Windows High Contrast: сүүдэр, дэвсгэр арилдаг тул сонгосныг зузаан хүрээгээр ялгана */
+  @media (forced-colors: active) {
+    .choice[data-checked="true"],
+    .seg[data-checked="true"],
+    [data-rating][data-checked="true"] { outline: 3px solid Highlight; outline-offset: -3px; }
+    [data-checked="true"] > .mark { background: Highlight; }
+    .is-invalid > .q-body > .choice-group { border-style: dashed; }
   }
 }
 

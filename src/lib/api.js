@@ -1,4 +1,4 @@
-import { supabase, isDemo } from './supabase'
+import { supabase, isDemo, isMisconfigured } from './supabase'
 import { DEFAULT_SUBJECTS, DEFAULT_TOPICS } from './constants'
 
 const DEMO_RESP = 'odorlog.demo.responses'
@@ -14,6 +14,7 @@ const write = (k, v) => {
 }
 
 export async function submitResponse(row) {
+  if (isMisconfigured) throw new Error('NOT_CONFIGURED')
   if (isDemo) {
     const all = read(DEMO_RESP, [])
     all.push({ ...row, id: crypto.randomUUID?.() ?? String(Date.now()), created_at: new Date().toISOString() })
@@ -139,11 +140,13 @@ export async function currentAdmin() {
   const { data } = await supabase.auth.getSession()
   const user = data.session?.user
   if (!user) return null
-  const { data: ok } = await supabase.rpc('is_admin')
+  const { data: ok, error } = await supabase.rpc('is_admin')
+  if (error) throw new Error('NETWORK')
   return ok ? user : null
 }
 
 export async function signIn(email, password) {
+  if (isMisconfigured) throw new Error('NOT_CONFIGURED')
   if (isDemo) {
     const expected = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || 'amjilt2026'
     if (password !== expected) throw new Error('BAD_CREDENTIALS')
@@ -151,7 +154,8 @@ export async function signIn(email, password) {
     return { email: 'demo' }
   }
   const { error } = await supabase.auth.signInWithPassword({ email, password })
-  if (error) throw new Error('BAD_CREDENTIALS')
+  // 400 = буруу мэйл/нууц үг; бусад нь сүлжээ, серверийн алдаа
+  if (error) throw new Error(error.status === 400 || error.code === 'invalid_credentials' ? 'BAD_CREDENTIALS' : 'NETWORK')
   const user = await currentAdmin()
   if (!user) {
     await supabase.auth.signOut()
